@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 import urllib
 import urllib2
 
@@ -79,7 +80,7 @@ def get_languages_for_translate(appid):
 def detect(appid, text):
     params = {
         'appid': appid, 
-        'text': text, 
+        'text': text.encode('utf-8'), 
     }
     root = _get('Detect', params)
     return root.text
@@ -88,23 +89,21 @@ def translate(appid, text, to_code, from_code='',
               content_type='text/html', category='general'):
     params = {
         'appid': appid, 
-        'text': text, 
-        'to':to_code, 
-        'from':from_code, 
-        'contentType':content_type, 
-        'category':category
+        'text': text.encode('utf-8'), 
+        'to': to_code, 
+        'from': from_code, 
+        'contentType': content_type, 
+        'category': category
     }
     root = _get('Translate', params)
     return root.text
 
 def translate_array(appid, texts, to_code, from_code='', 
                     content_type='text/html', category='general'):
-    ns = NS
-    nsa = NSA
     # this api sucks, what a surprise!
     texts_xml = ''.join([ """
         <string xmlns="%(nsa)s">%(text)s</string>
-    """ % locals() for text in texts ])
+    """ % {'nsa': NSA, 'text': t.encode('utf-8') } for t in texts ])
     xml = """
     <TranslateArrayRequest>
         <AppId>%(appid)s</AppId>
@@ -121,7 +120,14 @@ def translate_array(appid, texts, to_code, from_code='',
         </Texts>
         <To>%(to_code)s</To>
     </TranslateArrayRequest>
-    """ % locals()
+    """ % {'texts_xml': texts_xml,
+           'to_code': str(to_code),
+           'from_code': str(from_code),
+           'content_type': str(content_type),
+           'category': str(category),
+           'appid': appid,
+           'ns': NS,
+           }
     root = _post('TranslateArray', xml)
     return _xpath(root, 'TranslateArrayResponse/TranslatedText')
 
@@ -150,12 +156,13 @@ def _parse(f):
     
 def _get(method, params):
     url = '%s%s?%s' % (ENDPOINT, method, urllib.urlencode(params))
-    f = urllib2.urlopen(url)
+    req = urllib2.Request(url) 
+    f = urllib2.urlopen(req)
     return _parse(f)
 
 def _post(method, data):
     url = ENDPOINT + method
-    req = urllib2.Request(url, data=data, headers={'Content-Type':'text/xml'})
+    req = urllib2.Request(url, data=data, headers={'Content-Type':'text/xml; charset=utf-8'})
     f = urllib2.urlopen(req)
     return _parse(f)
 
@@ -172,10 +179,8 @@ def _xpath(root, xpath):
 ####################
 
 if __name__ == '__main__':
-    appid = 'YOUR APP ID HERE'
-    print get_languages_for_translate(appid)
-    print translate(appid, 'good morning', to_code='ja')
-    print detect(appid, '')
-    for t in translate_array(appid, ['hello', 'goodbye'], 'ja'):
+    appid = 'YOUR APPID HERE'
+    print detect(appid, u"Raccolta di funzionalità per l'utilizzo tramite il servizio HTTP chiamate")
+    print translate(appid, 'The Microsoft Translator services can be used in web or client applications to perform language translation operations.', to_code='ja')
+    for t in translate_array(appid, [u'Servizio HTTP', u"Raccolta di funzionalità per l'utilizzo tramite il servizio HTTP chiamate"], 'en'):
         print t
-    print get_translations_array(appid, ['hello', 'goodbye'], 'en')
