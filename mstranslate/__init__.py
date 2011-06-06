@@ -90,8 +90,8 @@ def translate(appid, text, to_code, from_code='',
     params = {
         'appid': appid, 
         'text': text.encode('utf-8'), 
-        'to': to_code, 
-        'from': from_code, 
+        'to': str(to_code),
+        'from': str(from_code),
         'contentType': content_type, 
         'category': category
     }
@@ -102,7 +102,7 @@ def translate_array(appid, texts, to_code, from_code='',
                     content_type='text/html', category='general'):
     # this api sucks, what a surprise!
     texts_xml = ''.join([ """
-        <string xmlns="%(nsa)s">%(text)s</string>
+        <string xmlns="%(nsa)s"><![CDATA[%(text)s]]></string>
     """ % {'nsa': NSA, 'text': t.encode('utf-8') } for t in texts ])
     xml = """
     <TranslateArrayRequest>
