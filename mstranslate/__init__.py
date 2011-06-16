@@ -7,7 +7,7 @@ try:
 except ImportError:
     from xml.etree.ElementTree import ElementTree, Element, tostring
 
-# Normalise some mappings to microsoft ones
+# Normalise some mappings
 CODEMAP = {
     'zh-cn': 'zh-CHS',
     'zh-tw': 'zh-CHT',
@@ -95,8 +95,11 @@ def translate(appid, text, to_code, from_code='',
         'contentType': content_type, 
         'category': category
     }
-    root = _get('Translate', params)
-    return root.text
+    try:
+        root = _get('Translate', params)
+        return root.text
+    except Exception, e:
+        raise TranslateError('Translation failed (%s -> %s) %s' % (from_code, to_code, e))
 
 def translate_array(appid, texts, to_code, from_code='', 
                     content_type='text/html', category='general'):
@@ -128,8 +131,11 @@ def translate_array(appid, texts, to_code, from_code='',
            'appid': appid,
            'ns': NS,
            }
-    root = _post('TranslateArray', xml)
-    return _xpath(root, 'TranslateArrayResponse/TranslatedText')
+    try:
+        root = _post('TranslateArray', xml)
+        return _xpath(root, 'TranslateArrayResponse/TranslatedText')
+    except Exception, e:
+        raise TranslateError('Translation failed (%s -> %s) %s' % (from_code, to_code, e))
 
 ####################
 
@@ -179,8 +185,9 @@ def _xpath(root, xpath):
 ####################
 
 if __name__ == '__main__':
-    appid = 'YOUR APPID HERE'
+    import sys
+    appid = sys.argv[1]
     print detect(appid, u"Raccolta di funzionalità per l'utilizzo tramite il servizio HTTP chiamate")
     print translate(appid, 'The Microsoft Translator services can be used in web or client applications to perform language translation operations.', to_code='ja')
-    for t in translate_array(appid, [u'Servizio HTTP', u"Raccolta di funzionalità per l'utilizzo tramite il servizio HTTP chiamate"], 'en'):
-        print t
+    for t in translate_array(appid, [u'Servizio HTTP', u"Raccolta di funzionalità per l'utilizzo tramite il servizio HTTP chiamate"], 'ja'):
+        print t, type(t), repr(t)
